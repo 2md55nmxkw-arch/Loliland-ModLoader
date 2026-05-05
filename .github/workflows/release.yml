@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake -S "${{ github.workspace }}" -B build
+
+      - name: Build Release
+        run: cmake --build build --config Release --parallel
+
+      - name: Verify executable
+        run: |
+          if (-not (Test-Path -Path "LoliLoader.exe")) { throw "LoliLoader.exe not found" }
+          Get-Item "LoliLoader.exe" | Format-List Name, Length, LastWriteTime
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: LoliLoader.exe
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
